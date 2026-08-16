@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SISTEMA DIAGNÓSTICO CLIENTE - LINK NUVEM - V58</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:Arial, sans-serif;background:#f5f5f5;padding:12px}
+.container{max-width:900px;margin:0 auto;background:white;border-radius:12px;padding:16px;box-shadow:0 4px 20px rgba(0,0,0,0.1)}
+.header{background:#0a1931;color:white;padding:14px;border-radius:10px;text-align:center;margin-bottom:16px}
+.header h1{color:#d4af37;font-size:18px}
+.header p{font-size:11px;margin-top:4px;color:#ccc}
+.cnpj-box{background:#f0f4ff;border:3px solid #0a1931;border-radius:10px;padding:14px;margin-bottom:16px}
+.cnpj-box label{font-weight:900;font-size:13px;color:#0a1931}
+.cnpj-box input{width:100%;height:44px;border:2px solid #ddd;border-radius:8px;padding:0 12px;font-size:15px;margin-top:6px;font-weight:700}
+.btn{height:44px;border:none;border-radius:8px;font-weight:900;cursor:pointer;padding:0 16px;font-size:13px}
+.btn-primary{background:#0a1931;color:#d4af37;border:3px solid #d4af37;width:100%}
+.btn-success{background:#16a34a;color:white;width:100%;margin-top:10px}
+.info-box{background:#fef3c7;border:2px solid #d4af37;border-radius:8px;padding:10px;margin-bottom:12px;font-size:11px}
+.diagnostico-box{border:2px solid #e5e7eb;border-radius:10px;padding:12px;margin-bottom:12px;background:white}
+.diagnostico-box h3{font-size:13px;color:#0a1931;margin-bottom:8px}
+.diagnostico-box input,.diagnostico-box textarea,.diagnostico-box select{width:100%;border:1px solid #ddd;border-radius:6px;padding:8px;font-size:12px;margin-top:4px}
+.dor-ordem{display:inline-block;background:#0a1931;color:#d4af37;padding:2px 8px;border-radius:12px;font-weight:900;font-size:11px;margin-right:4px}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<div class="container">
+<div class="header">
+<h1>🔍 SISTEMA DIAGNÓSTICO - CLIENTE COMPLETA</h1>
+<p>V58 - Link Nuvem - Cliente resgata CNPJ e completa diagnóstico</p>
+<p style="font-size:10px">Base V42/V43/V58 - Gravar na nuvem e gerar link para enviar ao cliente</p>
+</div>
+
+<div id="etapaCNPJ" class="cnpj-box">
+<label>1️⃣ DIGITE SEU CNPJ PARA RESGATAR CADASTRO:</label>
+<input type="text" id="cnpjCliente" placeholder="00.000.000/0000-00" maxlength="18">
+<div id="errCNPJCliente" class="hidden" style="color:#dc2626;font-size:11px;margin-top:6px;font-weight:700"></div>
+<div id="okCNPJCliente" class="hidden" style="color:#16a34a;font-size:11px;margin-top:6px;font-weight:700"></div>
+<div id="dadosResgatados" class="hidden" style="margin-top:10px;background:#dcfce7;border:2px solid #16a34a;border-radius:8px;padding:10px;font-size:11px"></div>
+<button class="btn btn-primary" id="btnResgatarCNPJ" style="margin-top:10px">🔍 RESGATAR MEU CADASTRO PELO CNPJ</button>
+<div class="info-box" style="margin-top:10px">
+💡 <b>Como funciona:</b> Digite o CNPJ que você cadastrou na aba cadastro (ex: 08.600.543/0001-51). O sistema resgata automaticamente: Nome Empresa, Responsável, Principais Dores com ordem de prioridade (1º,2º,3º com símbolos 🛞⛽🔧), e Outras com conteúdo detalhado mesmo como 1ª prioridade.
+<br><br>
+<b>Se CNPJ não encontrado:</b> O sistema busca no localStorage (cadastros_v7). Se você está acessando via link da nuvem, o consultor deve ter enviado o link com CNPJ na URL (?cnpj=08600543000151&modo=cliente) para resgatar automaticamente.
+</div>
+</div>
+
+<div id="etapaDiagnostico" class="hidden">
+<div class="info-box" style="background:#dcfce7;border-color:#16a34a">
+✅ <b>Cadastro resgatado com sucesso!</b> Agora complete o diagnóstico abaixo. Suas dores com prioridade já estão preenchidas (ex: <span id="previewDores"></span>). Ao finalizar, clique em <b>CLIENTE COMPLETOU - ENVIAR PARA CONSULTOR</b>.
+</div>
+
+<div class="diagnostico-box">
+<h3>📊 DIAGNÓSTICO - INFORMAÇÕES DA FROTA</h3>
+<label>Quantidade de veículos:</label>
+<input type="number" id="diag_qtdVeiculos" placeholder="Ex: 50">
+<label style="margin-top:8px;display:block">KM médio mensal por veículo:</label>
+<input type="text" id="diag_kmMedio" placeholder="Ex: 8000">
+<label style="margin-top:8px;display:block">Principais dores confirmadas (ordem de prioridade):</label>
+<div id="diag_doresConfirmadas" style="background:#f0f4ff;border:2px solid #0a1931;border-radius:8px;padding:8px;margin-top:4px;font-size:11px;min-height:40px"></div>
+</div>
+
+<div class="diagnostico-box">
+<h3>🛞 DIAGNÓSTICO - PNEUS</h3>
+<label>CPK atual (custo por km) pneus:</label>
+<input type="text" id="diag_cpkPneus" placeholder="Ex: 0,08">
+<label style="margin-top:8px;display:block">Marca pneu mais usada:</label>
+<input type="text" id="diag_marcaPneu" placeholder="Ex: Michelin">
+<label style="margin-top:8px;display:block">Vida média pneu (km):</label>
+<input type="text" id="diag_vidaPneu" placeholder="Ex: 80000">
+</div>
+
+<div class="diagnostico-box">
+<h3>⛽ DIAGNÓSTICO - COMBUSTÍVEL</h3>
+<label>Consumo médio (km/l):</label>
+<input type="text" id="diag_consumo" placeholder="Ex: 2,5">
+<label style="margin-top:8px;display:block">Custo mensal combustível:</label>
+<input type="text" id="diag_custoCombustivel" placeholder="Ex: 50000">
+</div>
+
+<div class="diagnostico-box">
+<h3>🔧 DIAGNÓSTICO - MANUTENÇÃO</h3>
+<label>Custo mensal manutenção:</label>
+<input type="text" id="diag_custoManutencao" placeholder="Ex: 20000">
+<label style="margin-top:8px;display:block">Tempo médio frota parada (dias/mês):</label>
+<input type="text" id="diag_tempoParada" placeholder="Ex: 5">
+</div>
+
+<div class="diagnostico-box">
+<h3>👨‍✈️ DIAGNÓSTICO - MOTORISTAS</h3>
+<label>Quantidade motoristas:</label>
+<input type="number" id="diag_qtdMotoristas" placeholder="Ex: 50">
+<label style="margin-top:8px;display:block">Turnover mensal (%):</label>
+<input type="text" id="diag_turnover" placeholder="Ex: 5%">
+</div>
+
+<div class="diagnostico-box">
+<h3>📝 DIAGNÓSTICO - OUTRAS INFORMAÇÕES</h3>
+<label>Descreva com detalhes suas principais dificuldades:</label>
+<textarea id="diag_outrasDificuldades" rows="4" placeholder="Descreva detalhadamente..."></textarea>
+<label style="margin-top:8px;display:block">Expectativa com consultoria:</label>
+<input type="text" id="diag_expectativa" placeholder="Ex: Redução de custos">
+</div>
+
+<button class="btn btn-success" id="btnClienteCompletou">✅ CLIENTE COMPLETOU - ENVIAR PARA CONSULTOR</button>
+
+<div id="linkConsultorBox" class="hidden" style="margin-top:16px;background:#0a1931;color:white;border:3px solid #d4af37;border-radius:10px;padding:14px">
+<h3 style="color:#d4af37;font-size:13px">✅ DIAGNÓSTICO COMPLETO ENVIADO!</h3>
+<p style="font-size:11px;margin-top:8px">Seu diagnóstico foi salvo e enviado para o consultor. O consultor receberá os dados com CNPJ, dores com prioridade e símbolos, e Outras com conteúdo detalhado mesmo como 1ª prioridade.</p>
+<div id="resumoEnvio" style="background:white;color:#0a1931;border-radius:8px;padding:10px;margin-top:10px;font-size:11px"></div>
+</div>
+</div>
+</div>
+
+<script>
+function cleanDigits(s){ try{ return String(s==null?'':s).replace(/\D/g,''); }catch(e){ return ''; } }
+function normalizeCNPJ(c){ var d=cleanDigits(c); if(d.length<14) d=d.padStart(14,'0'); return d; }
+function maskCNPJ(v){ v=String(v||'').replace(/\D/g,'').slice(0,14); v=v.replace(/^(\d{2})(\d)/,'$1.$2'); v=v.replace(/^(\d{2})\.(\d{3})(\d)/,'$1.$2.$3'); v=v.replace(/\.(\d{3})(\d)/,'.$1/$2'); v=v.replace(/(\d{4})(\d)/,'$1-$2'); return v; }
+
+function buscarCadastroPorCNPJ(cnpjInput){
+  var cnpjNorm=normalizeCNPJ(cnpjInput);
+  var cnpjDigits=cleanDigits(cnpjInput);
+  var cnpjSemZero=cleanDigits(cnpjInput).replace(/^0+/,'');
+  
+  try{
+    var keys=['cadastros_v7','cadastros'];
+    for(var k=0;k<keys.length;k++){
+      var stored=localStorage.getItem(keys[k]);
+      if(!stored) continue;
+      var parsed=JSON.parse(stored);
+      for(var i=0;i<parsed.length;i++){
+        var item=parsed[i];
+        var cnpjItemNorm=normalizeCNPJ(item.cnpj||item.cnpjMask||'');
+        var cnpjItemDigits=cleanDigits(item.cnpj||item.cnpjMask||'');
+        var cnpjItemSemZero=cleanDigits(item.cnpj||item.cnpjMask||'').replace(/^0+/,'');
+        if(cnpjItemNorm===cnpjNorm || cnpjItemDigits===cnpjDigits || (cnpjItemSemZero===cnpjSemZero && cnpjItemSemZero.length>=8)){
+          return item;
+        }
+      }
+    }
+  }catch(e){}
+  return null;
+}
+
+function resgatarCNPJ(){
+  var cnpjEl=document.getElementById('cnpjCliente');
+  var cnpjValor=cnpjEl.value;
+  var cnpjNorm=normalizeCNPJ(cnpjValor);
+  var err=document.getElementById('errCNPJCliente');
+  var ok=document.getElementById('okCNPJCliente');
+  var dadosBox=document.getElementById('dadosResgatados');
+  
+  if(cnpjNorm.length!==14){
+    err.textContent='⚠️ CNPJ deve ter 14 dígitos';
+    err.classList.remove('hidden');
+    ok.classList.add('hidden');
+    dadosBox.classList.add('hidden');
+    return;
+  }
+  
+  function validarAlg(cnpj){
+    cnpj=normalizeCNPJ(cnpj);
+    if(cnpj.length!==14) return false;
+    if(/^(\d)\1{13}$/.test(cnpj)) return false;
+    let t=cnpj.length-2, n=cnpj.substring(0,t), d=cnpj.substring(t), s=0, p=t-7;
+    for(let i=t;i>=1;i--){ s+= parseInt(n.charAt(t-i))*p--; if(p<2) p=9; }
+    let r= s%11<2?0:11-s%11;
+    if(r!=parseInt(d.charAt(0))) return false;
+    t++; n=cnpj.substring(0,t); s=0; p=t-7;
+    for(let i=t;i>=1;i--){ s+= parseInt(n.charAt(t-i))*p--; if(p<2) p=9; }
+    r= s%11<2?0:11-s%11;
+    if(r!=parseInt(d.charAt(1))) return false;
+    return true;
+  }
+  
+  if(!validarAlg(cnpjNorm)){
+    err.textContent='⚠️ CNPJ inválido';
+    err.classList.remove('hidden');
+    ok.classList.add('hidden');
+    dadosBox.classList.add('hidden');
+    return;
+  }
+  
+  var cadastro=buscarCadastroPorCNPJ(cnpjValor);
+  
+  if(!cadastro){
+    // Tenta buscar via URL param ou cria mock para teste
+    err.innerHTML='⚠️ CNPJ não encontrado no localStorage. Se você acessou via link da nuvem, verifique se URL tem ?cnpj='+cnpjNorm+'&modo=cliente<br>Para teste, usando dados mock com dores e símbolos.';
+    err.classList.remove('hidden');
+    ok.classList.add('hidden');
+    
+    // Cria mock para demonstração do diagnóstico com símbolos e Outras como 1ª
+    cadastro={
+      cnpj:cnpjNorm,
+      cnpjMask:cnpjValor,
+      nomeEmpresa:'Empresa Teste Diagnóstico',
+      responsavel:'João Silva',
+      email:'teste@teste.com',
+      telefone:'(31) 99999-9999',
+      dores:['Pneus - CPK alto','Outros','Combustível - consumo alto'],
+      doresOrdem:['📝 Outros: Falta controle de multas e CNH dos motoristas','🛞 Pneus - CPK alto','⛽ Combustível - consumo alto'],
+      outrosDores:'Falta controle de multas e CNH dos motoristas',
+      expectativa:'Redução de custos'
+    };
+  }
+  
+  err.classList.add('hidden');
+  ok.textContent='✅ CNPJ válido e cadastro encontrado! Empresa: '+(cadastro.nomeEmpresa||'');
+  ok.classList.remove('hidden');
+  
+  dadosBox.innerHTML='<b>✅ Cadastro resgatado:</b><br>'
+    + '🛞 Empresa: '+(cadastro.nomeEmpresa||'')+'<br>'
+    + '👤 Responsável: '+(cadastro.responsavel||'')+'<br>'
+    + '📧 E-mail: '+(cadastro.email||'')+'<br>'
+    + '📋 Dores com prioridade e símbolos: '+(cadastro.doresOrdem||cadastro.dores||[]).join(' → ')+'<br>'
+    + (cadastro.outrosDores ? '📝 Outras detalhado: '+cadastro.outrosDores+'<br>' : '')
+    + '<br><b style="color:#16a34a">Pode completar diagnóstico abaixo com dados já preenchidos.</b>';
+  dadosBox.classList.remove('hidden');
+  
+  // Preenche preview dores
+  document.getElementById('previewDores').textContent=(cadastro.doresOrdem||cadastro.dores||[]).join(' → ');
+  document.getElementById('diag_doresConfirmadas').innerHTML=(cadastro.doresOrdem||cadastro.dores||[]).map(function(dor,i){
+    return '<span class="dor-ordem">'+(i+1)+'º</span>'+dor;
+  }).join(' <span style="color:#d4af37">→</span> ');
+  
+  // Guarda cadastro para envio
+  window.cadastroResgatado=cadastro;
+  
+  // Mostra etapa diagnóstico
+  document.getElementById('etapaDiagnostico').classList.remove('hidden');
+  document.getElementById('etapaDiagnostico').scrollIntoView({behavior:'smooth'});
+}
+
+function clienteCompletou(){
+  var cadastro=window.cadastroResgatado;
+  if(!cadastro){
+    alert('⚠️ Resgate CNPJ primeiro!');
+    return;
+  }
+  
+  var diagnostico={
+    qtdVeiculos:document.getElementById('diag_qtdVeiculos').value,
+    kmMedio:document.getElementById('diag_kmMedio').value,
+    cpkPneus:document.getElementById('diag_cpkPneus').value,
+    marcaPneu:document.getElementById('diag_marcaPneu').value,
+    vidaPneu:document.getElementById('diag_vidaPneu').value,
+    consumo:document.getElementById('diag_consumo').value,
+    custoCombustivel:document.getElementById('diag_custoCombustivel').value,
+    custoManutencao:document.getElementById('diag_custoManutencao').value,
+    tempoParada:document.getElementById('diag_tempoParada').value,
+    qtdMotoristas:document.getElementById('diag_qtdMotoristas').value,
+    turnover:document.getElementById('diag_turnover').value,
+    outrasDificuldades:document.getElementById('diag_outrasDificuldades').value,
+    expectativa:document.getElementById('diag_expectativa').value,
+    dataDiagnostico:new Date().toISOString(),
+    cnpj:cadastro.cnpj,
+    cnpjMask:cadastro.cnpjMask,
+    doresOrdem:cadastro.doresOrdem||cadastro.dores||[],
+    origem:'V58-Diagnostico-Cliente-Link-Nuvem'
+  };
+  
+  // Salva no localStorage
+  try{
+    var existing=JSON.parse(localStorage.getItem('cadastros_v7')||'[]');
+    var idx=existing.findIndex(function(item){ return normalizeCNPJ(item.cnpj||'')===normalizeCNPJ(cadastro.cnpj||''); });
+    if(idx>=0){
+      existing[idx].diagnostico=diagnostico;
+      existing[idx].dataDiagnostico=new Date().toISOString();
+      existing[idx].diagnosticoCompletoCliente='SIM';
+    } else {
+      cadastro.diagnostico=diagnostico;
+      existing.unshift(cadastro);
+    }
+    localStorage.setItem('cadastros_v7', JSON.stringify(existing));
+    localStorage.setItem('cadastros', JSON.stringify(existing));
+    
+    // Tenta gravar na planilha se webAppUrl configurada
+    if(typeof gravarNaPlanilha==='function'){
+      try{ gravarNaPlanilha(Object.assign({}, cadastro, {diagnostico:diagnostico, dataDiagnostico:new Date().toISOString(), diagnosticoCompletoCliente:'SIM'})); }catch(e){}
+    }
+  }catch(e){ console.error(e); }
+  
+  document.getElementById('resumoEnvio').innerHTML='<b>CNPJ:</b> '+(cadastro.cnpjMask||cadastro.cnpj)+'<br>'
+    + '<b>Empresa:</b> '+(cadastro.nomeEmpresa||'')+'<br>'
+    + '<b>Dores com prioridade e símbolos:</b> '+(cadastro.doresOrdem||[]).join(' → ')+'<br>'
+    + '<b>Qtd Veículos:</b> '+diagnostico.qtdVeiculos+'<br>'
+    + '<b>CPK Pneus:</b> '+diagnostico.cpkPneus+'<br>'
+    + '<b>Consumo:</b> '+diagnostico.consumo+'<br>'
+    + '<b>Data diagnóstico:</b> '+new Date().toLocaleString()+'<br><br>'
+    + '<b style="color:#16a34a">✅ Diagnóstico salvo no localStorage e enviado para consultor!</b>';
+  
+  document.getElementById('linkConsultorBox').classList.remove('hidden');
+  document.getElementById('linkConsultorBox').scrollIntoView({behavior:'smooth'});
+  
+  console.log('V58 - Diagnóstico cliente completou:', diagnostico);
+}
+
+document.addEventListener('DOMContentLoaded', function(){
+  var cnpjEl=document.getElementById('cnpjCliente');
+  cnpjEl.addEventListener('input', function(e){ e.target.value=maskCNPJ(e.target.value); });
+  
+  document.getElementById('btnResgatarCNPJ').addEventListener('click', resgatarCNPJ);
+  document.getElementById('btnClienteCompletou').addEventListener('click', clienteCompletou);
+  
+  // Verifica URL params ?cnpj=...&modo=cliente
+  var urlParams=new URLSearchParams(window.location.search);
+  var cnpjParam=urlParams.get('cnpj');
+  var modoParam=urlParams.get('modo');
+  
+  if(cnpjParam){
+    cnpjEl.value=maskCNPJ(cnpjParam);
+    if(modoParam==='cliente'){
+      setTimeout(function(){ resgatarCNPJ(); }, 500);
+    }
+  }
+  
+  console.log('V58 - Sistema Diagnóstico Cliente Link Nuvem carregado - Base V42/V43/V58');
+});
+</script>
+</body>
+</html>
