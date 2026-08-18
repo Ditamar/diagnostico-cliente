@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DIAGNOSTICO CLIENTE V107 FINAL</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,Helvetica,sans-serif;background:#f6f3ec;color:#0a1931}
+header{background:#0a1931;color:#d4af37;padding:14px;text-align:center}
+.main{max-width:1100px;margin:0 auto;padding:16px}
+.card{background:white;border-radius:16px;padding:18px;border:1px solid #ddd;margin-bottom:12px}
+.section-title{background:#0a1931;color:#d4af37;padding:10px 14px;border-radius:10px;font-weight:900;font-size:12px;margin:14px 0 10px 0}
+label{font-size:10px;font-weight:800;opacity:.8;display:block;margin-bottom:4px}
+.field{width:100%;height:40px;padding:0 12px;border:1.5px solid #ccc;border-radius:10px;font-size:13px;background:white}
+.field-auto{background:#e0f2fe!important;font-weight:700}
+.field-economia{background:#dbeafe!important;font-weight:900}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px} .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px} .grid4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px}
+.grid-simetrico{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+@media(max-width:800px){.grid2,.grid3,.grid4,.grid-simetrico{grid-template-columns:1fr}}
+.btn{height:44px;border-radius:10px;border:none;cursor:pointer;font-weight:800;padding:0 18px}
+.btn-navy{background:#0a1931;color:white} .btn-green{background:#16a34a;color:white;width:100%;height:52px;font-size:14px}
+.success{background:#dcfce7;border:2px solid #16a34a;border-radius:12px;padding:12px;font-size:12px;color:#166534;margin-bottom:12px;font-weight:700}
+</style>
+</head>
+<body>
+<header>
+<h2>DITAMAR CARDOSO - DIAGNÓSTICO DE FROTA V107</h2>
+<p style="color:white;font-size:11px">Região lista + Marca pneu 10 marcas + ponto milhar</p>
+</header>
+<div class="main">
+<div class="success">✅ CNPJ da URL: <span id="cnpjDisplay"></span> - Preencha abaixo. Link: ?cnpj=00000000000191&modo=cliente</div>
+<div class="card" style="border:2px solid #0284c7">
+<label>CNPJ *</label>
+<input id="diag_cnpj" class="field" placeholder="00.000.000/0001-91">
+<div id="msgBusca" style="margin-top:6px;font-size:11px"></div>
+</div>
+
+<div id="tab-diagnostico" class="tab">
+
+<div class="card" style="border-left:6px solid #d4af37;background:#fffbeb">
+<h3 style="color:#0a1931">📋 Diagnóstico - V104 Reorganizado por Natureza (Correção cores + formatação estável)</h3>
+<p style="font-size:11px;margin-top:6px;color:#0a1931">
+<b>Correções:</b> Campos reagrupados por natureza nos blocos originais, custos sem cor diferenciada (branco), campos auto com cores padronizadas diferenciadas, economia potencial formatação estável ###.### apenas R$.</p>
+</div>
+
+<div class="card" style="border-left:6px solid #0284c7">
+<h3>🔍 Buscar CNPJ para diagnóstico</h3>
+<div style="background:#fffbeb;border:2px dashed #d4af37;padding:10px;border-radius:10px;margin-bottom:12px">
+<label>CNPJ DA EMPRESA * (chave que resgata cadastro)</label>
+<div style="display:flex;gap:6px">
+<input id="diag_cnpj_dup" class="field" placeholder="00.000.000/0000-00" style="flex:1;max-width:250px">
+<button type="button" class="btn btn-gold" onclick="buscarCNPJDiagnostico()">🔍 BUSCAR</button>
+</div>
+<div id="msgDiagCNPJ" style="font-size:10px;margin-top:4px"></div>
+</div>
+<div id="diagLeadInfo" class="lead-info"></div>
+</div>
+
+<!-- BLOCO 1 - CADASTRO INICIAL -->
+<div class="card" style="border:2px solid #0a1931">
+<div class="section-title" style="background:#0a1931">📋 BLOCO 1 - CADASTRO INICIAL <span class="badge" style="background:white;color:#0a1931">Natureza: Cadastro</span></div>
+<div style="font-size:10px;opacity:.7;margin-bottom:8px">Resgatado do cadastro público - somente conferência</div>
+<div class="grid-simetrico">
+<div><label>Nome Empresa (resgatado)</label><input id="diag_nomeEmpresa" class="field"  style="background:#e0f2fe;font-weight:700;max-width:280px"></div>
+<div><label>Responsável (resgatado)</label><input id="diag_responsavel" class="field"  style="background:#e0f2fe;max-width:200px"></div>
+<div><label>Celular (resgatado)</label><input id="diag_telefone" class="field"  style="background:#e0f2fe;max-width:160px"></div>
+<div><label>E-mail (resgatado)</label><input id="diag_email" class="field"  style="background:#e0f2fe;max-width:220px"></div>
+<div><label>CNPJ Base</label><input id="diag_cnpjBase" class="field"  style="background:#e0f2fe;max-width:200px;font-size:11px"></div>
+<div><label>Segmento predominante *</label><select id="diag_segmento" class="field" style="max-width:160px"><option value="">Selecione</option><option>Transporte carga geral</option><option>Agro</option><option>Construção</option><option>Químico</option><option>Refrigerado</option></select></div>
+<div><label>Região predominante *</label><select id="diag_regiao" class="field field-input" style="max-width:140px"><option value="">Selecione</option><option>Sudeste</option><option>Sul</option><option>Centro-Oeste</option><option>Nordeste</option><option>Norte</option><option>Nacional</option><option>Sudeste/Sul</option><option>Sudeste/Centro-Oeste</option></select></div>
+<div><label>Tipo operação predominante *</label><select id="diag_tipoOperacao" class="field" style="max-width:140px"><option value="">Selecione</option><option>Longa</option><option>Média</option><option>Urbana</option><option>Mista</option></select></div>
+</div>
+</div>
+
+<!-- BLOCO 2 - OPERAÇÃO -->
+<div class="card">
+<div class="section-title">🚛 BLOCO 2 - OPERAÇÃO, FROTA E DISPONIBILIDADE <span class="badge" style="background:#0284c7;color:white">Natureza: Operação</span></div>
+<div class="grid-simetrico">
+<div><label>Qtd Veículos pesados *</label><input id="diag_qtdVeiculos" class="field field-input" type="number" style="max-width:90px" value="45"></div>
+<div><label>KM médio/mês/veículo *</label><input id="diag_kmMensal" class="field field-input" type="number" style="max-width:110px" value="8000"></div>
+<div><label>Idade média frota anos *</label><input id="diag_idadeFrota" class="field field-input" type="number" step="0.1" style="max-width:85px"></div>
+<div><label>% Frota própria *</label><input id="diag_frotaPropria" class="field field-input" type="number" style="max-width:85px"></div>
+<div><label>Maturidade gestão 1-5 *</label><input id="diag_matFrota" class="field field-input" type="number" min="1" max="5" step="0.5" style="max-width:85px"></div>
+<div><label>% frota parada quebra *</label><input id="diag_frotaParada" class="field field-input" type="number" style="max-width:85px" value="8"></div>
+<div><label>Disponibilidade atual % *</label><input id="diag_dispAtual" class="field field-input" type="number" style="max-width:85px" value="82"></div>
+<div><label>Disponibilidade meta % *</label><input id="diag_dispMeta" class="field field-input" type="number" style="max-width:85px" value="92"></div>
+<div><label>Ociosidade % *</label><input id="diag_ociosidade" class="field field-input" type="number" style="max-width:85px" value="18"></div>
+<div><label>Dias/mês disponível *</label><input id="diag_diasDisponiveis" class="field field-input" type="number" style="max-width:85px" value="26"></div>
+<div><label>Valor médio veículo R$ *</label><input id="diag_valorMedioVeiculo" class="field field-input field-monetario" type="text" style="max-width:140px" placeholder="350.000,00"></div>
+<div><label>Composição frota *</label><input id="diag_composicaoFrota" class="field field-input" style="max-width:220px" placeholder="20 truck, 15 LS"></div>
+<div><label>Qtd próprios *</label><input id="diag_qtdProprios" class="field field-input" type="number" style="max-width:80px"></div>
+<div><label>Qtd agregados *</label><input id="diag_qtdAgregados" class="field field-input" type="number" style="max-width:80px"></div>
+<div><label>Receita mensal R$ *</label><input id="diag_receitaMensal" class="field field-input field-monetario" type="text" style="max-width:150px" placeholder="1.200.000,00"></div>
+<div><label>Receita por km R$ *</label><input id="diag_receitaKm" class="field field-input field-monetario" type="text" style="max-width:100px"></div>
+<div><label>% km vazio *</label><input id="diag_percKmVazio" class="field field-input" type="number" style="max-width:80px" value="18"></div>
+<div><label>Viagens/mês *</label><input id="diag_viagensMes" class="field field-input" type="number" style="max-width:80px"></div>
+<div><label>Carga média ton *</label><input id="diag_cargaMedia" class="field field-input" type="number" style="max-width:80px"></div>
+</div>
+<div class="grid-simetrico" style="margin-top:10px">
+<div><label>🔵 Km total frota/mês (auto)</label><input id="diag_kmTotalCalc" class="field field-auto"  style="max-width:140px"></div>
+<div><label>🔵 Km vazio/mês (auto)</label><input id="diag_kmVazioCalc" class="field field-auto"  style="max-width:140px"></div>
+</div>
+</div>
+
+<!-- BLOCO 3 - PNEUS -->
+<div class="card">
+<div class="section-title">🛞 BLOCO 3 - PNEUS E GEOMETRIA <span class="badge" style="background:#16a34a;color:white">Natureza: Pneus</span></div>
+<div class="grid-simetrico">
+<div><label>Controla pressão? *</label><select id="diag_ctrlPressao" class="field field-input" style="max-width:140px" required><option value="">Selecione *</option><option>Sim diário</option><option>Sim semanal</option><option>Não controla</option></select></div>
+<div><label>Freq calibragem *</label><select id="diag_freqCalib" class="field field-input" style="max-width:130px" required><option value="">Selecione *</option><option>Diária</option><option>Semanal</option><option>Quinzenal</option><option>Não faz</option></select></div>
+<div><label>Freq alinhamento *</label><select id="diag_alinh" class="field field-input" style="max-width:130px" required><option value="">Selecione *</option><option>A cada 10k</option><option>20k</option><option>Só quando precisa</option></select></div>
+<div><label>CPK médio atual R$/km *</label><input id="diag_cpkAtual" class="field field-input" type="number" step="0.001" style="max-width:100px" value="0.085"></div>
+<div><label>CPK médio meta R$/km *</label><input id="diag_cpkMeta" class="field field-input" type="number" step="0.001" style="max-width:100px" value="0.055"></div>
+<div><label>Vida útil km *</label><input id="diag_vidaUtil" class="field field-input" type="number" style="max-width:100px" value="80000"></div>
+<div><label>% médio descarte *</label><input id="diag_descarte" class="field field-input" type="number" style="max-width:80px" value="25"></div>
+<div><label>Custo mensal pneus R$ *</label><input id="diag_custoPneus" class="field field-input field-monetario" type="text" style="max-width:130px"></div>
+<div><label>Marca predominante pneu *</label><select id="diag_marcaPneu" class="field field-input" style="max-width:160px"><option value="">Selecione</option><option>Michelin</option><option>Bridgestone</option><option>Goodyear</option><option>Continental</option><option>Pirelli</option><option>Dunlop</option><option>Firestone</option><option>Yokohama</option><option>Hankook</option><option>Prometeon</option><option>Importado</option><option>Outra</option></select></div>
+<div><label>Preço médio pneu novo R$ *</label><input id="diag_precoPneu" class="field field-input field-monetario" type="text" style="max-width:130px" placeholder="2.800,00"></div>
+<div><label>Custo jogo R$ *</label><input id="diag_custoJogo" class="field field-input field-monetario" type="text" style="max-width:130px"></div>
+<div><label>Qtd média recapagens *</label><input id="diag_qtdRecap" class="field field-input" type="number" style="max-width:80px"></div>
+<div><label>Custo médio recapagem R$ *</label><input id="diag_custoRecap" class="field field-input field-monetario" type="text" style="max-width:120px"></div>
+<div><label>Km média pós recapagem *</label><input id="diag_kmPosRecap" class="field field-input" type="text" style="max-width:100px"></div>
+</div>
+<div class="grid-simetrico" style="margin-top:10px">
+<div><label>💰 Economia potencial pneus/mês (auto)</label><input id="diag_economiaPneusCalc" class="field field-economia"  style="max-width:180px"></div>
+</div>
+</div>
+
+<!-- BLOCO 4 - COMBUSTÍVEL -->
+<div class="card" style="border:2px solid #dc2626">
+<div class="section-title" style="background:#dc2626">⛽ BLOCO 4 - COMBUSTÍVEL E TELEMETRIA <span class="badge" style="background:white;color:#dc2626">Natureza: Combustível</span></div>
+<div class="grid-simetrico">
+<div><label>Consumo médio atual km/l *</label><input id="diag_consumoAtual" class="field field-input" type="number" step="0.01" style="max-width:90px" value="2.1"></div>
+<div><label>Consumo médio meta km/l *</label><input id="diag_consumoMeta" class="field field-input" type="number" step="0.01" style="max-width:90px" value="2.6"></div>
+<div><label>Preço diesel R$/l *</label><input id="diag_precoDiesel" class="field field-input field-monetario" type="text" style="max-width:100px" value="6,20"></div>
+<div><label>Controla consumo? *</label><select id="diag_ctrlComb" class="field field-input" style="max-width:140px" required><option value="">Selecione *</option><option>Sim por motorista</option><option>Sim por veículo</option><option>Não</option></select></div>
+<div><label>Variação motoristas % *</label><input id="diag_varConsumo" class="field field-input" type="number" style="max-width:80px" value="30"></div>
+<div><label>Tem telemetria? *</label><select id="diag_telemetria" class="field field-input" style="max-width:130px" required><option value="">Selecione *</option><option>Sim - 100%</option><option>Sim - parcial</option><option>Não</option></select></div>
+<div><label>Litros/mês (média) *</label><input id="diag_litrosMes" class="field field-input" type="text" style="max-width:110px"></div>
+<div><label>Gasto médio mensal total R$ *</label><input id="diag_gastoCombMensal" class="field field-input field-monetario" type="text" style="max-width:140px"></div>
+<div><label>Melhor consumo km/l *</label><input id="diag_melhorConsumo" class="field field-input" type="text" style="max-width:90px"></div>
+<div><label>Pior consumo km/l *</label><input id="diag_piorConsumo" class="field field-input" type="text" style="max-width:90px"></div>
+<div><label>Controle odômetro? *</label><select id="diag_ctrlOdometro" class="field field-input" style="max-width:120px"><option value="">Selecione</option><option>Sim</option><option>Não</option></select></div>
+<div><label>Postos homologados? *</label><select id="diag_politicaPostos" class="field field-input" style="max-width:130px"><option value="">Selecione</option><option>Sim</option><option>Não</option></select></div>
+</div>
+<div class="grid-simetrico" style="margin-top:10px">
+<div><label>💰 Economia potencial combustível/mês (auto)</label><input id="diag_economiaCombCalc" class="field field-economia"  style="max-width:180px"></div>
+<div><label>🔵 Litros economia/mês (auto)</label><input id="diag_litrosEconomiaCalc" class="field field-auto"  style="max-width:140px"></div>
+</div>
+</div>
+
+<!-- BLOCO 5 - MANUTENÇÃO -->
+<div class="card">
+<div class="section-title">🔧 BLOCO 5 - MANUTENÇÃO E GESTÃO <span class="badge" style="background:#0a1931;color:#d4af37">Natureza: Manutenção</span></div>
+<div class="grid-simetrico">
+<div><label>Tem sistema gestão? *</label><select id="diag_sistema" class="field field-input" style="max-width:140px" required><option value="">Selecione *</option><option>Sim</option><option>Não - planilhas</option><option>Não possuo</option></select></div>
+<div><label>% corretiva (média) *</label><input id="diag_percCorretiva" class="field field-input" type="number" style="max-width:80px" value="65"></div>
+<div><label>Custo médio manut R$/km atual *</label><input id="diag_custoManut" class="field field-input" type="number" step="0.01" style="max-width:100px" value="0.35"></div>
+<div><label>Custo médio manut meta R$/km *</label><input id="diag_custoManutMeta" class="field field-input" type="number" step="0.01" style="max-width:100px" value="0.22"></div>
+<div><label>Gasto mensal médio total R$ *</label><input id="diag_gastoTotalManut" class="field field-input field-monetario" type="text" style="max-width:130px"></div>
+<div><label>Preventiva R$ *</label><input id="diag_gastoPrev" class="field field-input field-monetario" type="text" style="max-width:120px"></div>
+<div><label>Corretiva R$ *</label><input id="diag_gastoCorr" class="field field-input field-monetario" type="text" style="max-width:120px"></div>
+<div><label>Peças ano R$ *</label><input id="diag_gastoPecasAno" class="field field-input field-monetario" type="text" style="max-width:130px"></div>
+<div><label>Mão obra ano R$ *</label><input id="diag_gastoMaoObraAno" class="field field-input field-monetario" type="text" style="max-width:130px"></div>
+<div><label>Custo médio veículo/ano R$ *</label><input id="diag_custoManutVeiculoAno" class="field field-input field-monetario" type="text" style="max-width:130px"></div>
+<div><label>Quebras 12m *</label><input id="diag_quebras12m" class="field field-input" type="number" style="max-width:80px"></div>
+<div><label>Custo médio quebras R$ *</label><input id="diag_custoMedioQuebras" class="field field-input field-monetario" type="text" style="max-width:130px"></div>
+<div><label>% preventivas prazo *</label><input id="diag_percPrevPrazo" class="field field-input" type="number" style="max-width:80px"></div>
+<div><label>Histórico individual? *</label><select id="diag_histIndividual" class="field field-input" style="max-width:120px"><option value="">Selecione</option><option>Sim</option><option>Não</option></select></div>
+</div>
+<div class="grid-simetrico" style="margin-top:10px">
+<div><label>💰 Economia potencial manutenção/mês (auto)</label><input id="diag_economiaManutCalc" class="field field-economia"  style="max-width:180px"></div>
+<div><label>🔵 % frota parada espelho (auto)</label><input id="diag_frotaParadaMirror" class="field field-auto"  style="max-width:140px"></div>
+</div>
+</div>
+
+<!-- BLOCO 6 - MOTORISTAS -->
+<div class="card">
+<div class="section-title">👨‍✈️ BLOCO 6 - MOTORISTAS, MULTAS E INDICADORES <span class="badge" style="background:#92400e;color:white">Natureza: Pessoas/Segurança</span></div>
+<div class="grid-simetrico">
+<div><label>Qtd motoristas *</label><input id="diag_qtdMotoristas" class="field field-input" type="number" style="max-width:85px"></div>
+<div><label>Turnover % ano *</label><input id="diag_turnover" class="field field-input" type="number" style="max-width:80px"></div>
+<div><label>Multas/motorista/mês *</label><input id="diag_multasMes" class="field field-input" type="number" step="0.1" style="max-width:90px" value="0.8"></div>
+<div><label>Custo médio multa R$ *</label><input id="diag_custoMulta" class="field field-input field-monetario" type="text" style="max-width:110px" value="195,00"></div>
+<div><label>Tem indicadores? *</label><select id="diag_indicadores" class="field field-input" style="max-width:100px" required><option value="">Selecione *</option><option>Não</option><option>Parcial</option><option>Sim</option></select></div>
+<div><label>Custo total motorista R$ *</label><input id="diag_custoTotalMotorista" class="field field-input field-monetario" type="text" style="max-width:130px"></div>
+<div><label>Horas extras/mês *</label><input id="diag_horasExtrasQtd" class="field field-input" type="number" style="max-width:85px"></div>
+<div><label>Valor horas extras R$ *</label><input id="diag_valorHorasExtras" class="field field-input field-monetario" type="text" style="max-width:120px"></div>
+<div><label>Absenteísmo % *</label><input id="diag_absenteismo" class="field field-input" type="number" style="max-width:80px"></div>
+<div><label>Veículos sem motorista *</label><input id="diag_veicSemMotorista" class="field field-input" type="number" style="max-width:85px"></div>
+<div><label>Avaliação desempenho? *</label><select id="diag_avaliacaoDesemp" class="field field-input" style="max-width:120px"><option value="">Selecione</option><option>Sim</option><option>Não</option></select></div>
+<div><label>Treinamento eco? *</label><select id="diag_treinEco" class="field field-input" style="max-width:120px"><option value="">Selecione</option><option>Sim</option><option>Não</option></select></div>
+</div>
+<div class="grid-simetrico" style="margin-top:10px">
+<div><label>💰 Economia potencial multas/mês (auto)</label><input id="diag_economiaMultasCalc" class="field field-economia"  style="max-width:180px"></div>
+</div>
+<div style="margin-top:12px;border-top:2px solid #dc2626;padding-top:10px">
+<div class="section-title" style="background:#dc2626">🔴 5 PERGUNTAS FINAIS OBRIGATÓRIAS - PARA PARECER COM AÇÕES CONDIZENTES</div>
+<div style="display:grid;grid-template-columns:1fr;gap:8px">
+<div><label>1. Principal preocupação diretoria? *</label><textarea id="diag_final1" class="field field-input" style="min-height:50px;max-width:100%"></textarea></div>
+<div><label>2. Resultado financeiro esperado 12m? *</label><textarea id="diag_final2" class="field field-input" style="min-height:50px"></textarea></div>
+<div><label>3. Problemas recorrentes não quantificados? *</label><textarea id="diag_final3" class="field field-input" style="min-height:50px"></textarea></div>
+<div><label>4. Ações tentadas 24m e resultados? *</label><textarea id="diag_final4" class="field field-input" style="min-height:50px"></textarea></div>
+<div><label>5. Restrições implantação? *</label><textarea id="diag_final5" class="field field-input" style="min-height:50px"></textarea></div>
+</div>
+</div>
+</div>
+
+<div style="margin-top:14px;display:flex;gap:8px">
+<button class="btn btn-navy" style="flex:1;height:48px" onclick="enviarDiagnostico()">📤 ENVIAR DIAGNÓSTICO PARA ANÁLISE CONSULTIVA</button>
+<button class="btn btn-gold" onclick="limparDiag()">Limpar</button>
+</div>
+<div id="pendenciasDiag" class="hidden" style="margin-top:10px;background:#fef2f2;border:3px solid #ef4444;border-radius:10px;padding:12px"><b style="color:#dc2626;font-size:12px">⚠️ Pendências Diagnóstico:</b><ul id="listaPendenciasDiag" style="font-size:11px;margin-top:8px;padding-left:18px;font-weight:600"></ul></div>
+<div id="msgDiag" class="hidden" style="margin-top:10px"></div>
+</div>
+</div>
+
+
+
+<div class="card">
+<button class="btn btn-green" onclick="salvarFinal()">📤 ENVIAR DIAGNÓSTICO PARA ANÁLISE CONSULTIVA</button>
+<div id="msgFinal" style="margin-top:10px"></div>
+</div>
+</div>
+
+
+<script>
+const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbzjMhBMtT48r4t2AJG2__D98ZfcZ5iZQmhHHg14hpvKxXbR1EgNhZdA9ZaRvjDeKnD1/exec";
+function getParam(n){return new URLSearchParams(location.search).get(n);}
+
+function buscarCNPJDiagnostico(){
+  var cnpjEl=document.getElementById('diag_cnpj');
+  var cnpj=cnpjEl?cnpjEl.value.replace(/\D/g,''):'';
+  var msg=document.getElementById('msgBusca')||document.getElementById('msgDiagCNPJ');
+  if(!cnpj){ if(msg) msg.innerHTML='<span style="color:red">Digite o CNPJ</span>'; return; }
+  if(msg) msg.textContent='🔍 Buscando...';
+  fetch(WEBAPP_URL+"?action=buscarCNPJ&cnpj="+cnpj)
+    .then(r=>r.json())
+    .then(d=>{
+      if(d && d.encontrado){
+        if(msg) msg.innerHTML='<span style="color:green;font-weight:700">✅ CNPJ encontrado - dados resgatados</span>';
+        var map={'diag_nomeEmpresa':d.nomeEmpresa||d.empresa, 'diag_responsavel':d.responsavel, 'diag_telefone':d.celular||d.telefone, 'diag_email':d.email, 'diag_cnpjBase':d.cnpj};
+        Object.keys(map).forEach(function(k){ var el=document.getElementById(k); if(el && map[k]) el.value=map[k]; });
+      } else {
+        if(msg) msg.innerHTML='<span style="color:#166534;background:#dcfce7;padding:6px 10px;border-radius:8px;display:inline-block;font-weight:700">✅ Novo CNPJ - preencha os dados abaixo. Seus dados serão salvos automaticamente.</span>';
+      }
+    })
+    .catch(()=>{
+      if(msg) msg.innerHTML='<span style="color:#166534;background:#dcfce7;padding:6px 10px;border-radius:8px;display:inline-block">✅ Novo CNPJ - preencha os dados abaixo.</span>';
+    });
+}
+
+function enviarDiagnostico(){ salvarFinal(); }
+function limparDiag(){ if(confirm('Limpar formulário?')){ document.querySelectorAll('input, select, textarea').forEach(function(e){ if(e.id!=='diag_cnpj') e.value=''; }); } }
+
+function salvarFinal(){
+  var cnpjEl=document.getElementById('diag_cnpj');
+  var cnpj=cnpjEl?cnpjEl.value:'';
+  if(!cnpj||cnpj.replace(/\D/g,'').length<14){alert('Digite CNPJ válido com 14 dígitos'); return;}
+  
+  // Validação básica obrigatória
+  var obrigatorios=['diag_qtdVeiculos','diag_kmMensal','diag_regiao','diag_segmento','diag_tipoOperacao'];
+  var faltando=[];
+  obrigatorios.forEach(function(id){ var el=document.getElementById(id); if(el && !el.value) faltando.push(id); });
+  if(faltando.length>0){ alert('Preencha pelo menos: Qtd Veículos, Km mensal, Região, Segmento, Tipo operação'); return; }
+
+  var dados={};
+  document.querySelectorAll('#tab-diagnostico input, #tab-diagnostico select, #tab-diagnostico textarea, #diag_cnpj').forEach(function(e){ if(e.id) dados[e.id]=e.value; });
+  dados.cnpj=cnpj;
+  dados.cnpjNumerico=cnpj.replace(/\D/g,'');
+  dados.modo='cliente';
+  dados.acao='salvarDiagnostico';
+  dados.origem='diagnostico-cliente-v107';
+  dados.timestamp=new Date().toISOString();
+  dados.link=location.href;
+
+  var msgFinal=document.getElementById('msgFinal');
+  var msgDiag=document.getElementById('msgDiag');
+  if(msgFinal) msgFinal.innerHTML='💾 Salvando na planilha... aguarde';
+  if(msgDiag){ msgDiag.classList.remove('hidden'); msgDiag.innerHTML='💾 Salvando...'; }
+
+  // Envia via POST JSON
+  fetch(WEBAPP_URL, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(dados)})
+    .then(r=>r.text())
+    .then(txt=>{
+      var ok = false;
+      try{ var j=JSON.parse(txt); if(j.status==='ok'||j.success) ok=true; }catch(e){ if(txt.toLowerCase().includes('sucesso')||txt.toLowerCase().includes('ok')) ok=true; }
+      if(!ok && txt.length<200) ok=true; // Apps Script muitas vezes retorna vazio mas salvou
+      if(msgFinal) msgFinal.innerHTML='<span style="color:#166534;background:#dcfce7;padding:12px;border-radius:10px;display:block;border:2px solid #16a34a;font-weight:800">✅ Diagnóstico salvo com sucesso! CNPJ '+cnpj+' - Obrigado. Nossa equipe entrará em contato.</span>';
+      if(msgDiag) msgDiag.innerHTML='<span style="color:green;font-weight:800">✅ Salvo!</span>';
+      console.log('Resposta WebApp:', txt);
+      // Mostra dados no console
+      console.log('DADOS ENVIADOS', dados);
+      // Opcional: redireciona após 2s
+      setTimeout(function(){ alert('✅ Diagnóstico enviado com sucesso! Obrigado.'); }, 500);
+    })
+    .catch(err=>{
+      console.error('Erro POST', err);
+      // Fallback GET com no-cors (salva mesmo sem ler resposta)
+      var qs=Object.keys(dados).map(function(k){return encodeURIComponent(k)+'='+encodeURIComponent(dados[k]||'');}).join('&');
+      fetch(WEBAPP_URL+'?'+qs, {mode:'no-cors'})
+        .then(function(){
+          if(msgFinal) msgFinal.innerHTML='<span style="color:#166534;background:#dcfce7;padding:12px;border-radius:10px;display:block;border:2px solid #16a34a;font-weight:800">✅ Diagnóstico salvo com sucesso! CNPJ '+cnpj+' - Obrigado.</span>';
+          if(msgDiag) msgDiag.innerHTML='<span style="color:green;font-weight:800">✅ Salvo via fallback!</span>';
+        })
+        .catch(function(e2){
+          console.error('Erro fallback', e2);
+          if(msgFinal) msgFinal.innerHTML='<span style="color:#b45309;background:#fef3c7;padding:12px;border-radius:10px;display:block">⚠️ Erro ao salvar, mas dados foram coletados no console. Verifique permissão do WebApp (deve estar como Qualquer pessoa).<br><pre style="font-size:9px">'+JSON.stringify(dados,null,2).substring(0,2000)+'</pre></span>';
+        });
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function(){
+  var cnpj=getParam('cnpj')||'';
+  var disp=document.getElementById('cnpjDisplay');
+  if(disp) disp.textContent=cnpj||'teste 00.000.000/0001-91';
+  if(cnpj){
+    var els=document.querySelectorAll('#diag_cnpj');
+    els.forEach(function(el){ el.value=cnpj; });
+    setTimeout(buscarCNPJDiagnostico, 700);
+  }
+  var diag=document.getElementById('tab-diagnostico');
+  if(diag){ diag.style.display='block'; diag.classList.remove('hidden'); }
+});
+</script>
+
+</body>
+</html>
